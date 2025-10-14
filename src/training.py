@@ -1,63 +1,50 @@
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.models import Model
-import config  # Importação direta
+import config
 
-def get_data_generators():
-    """Cria e retorna os geradores de dados para treino, validação e teste."""
-    train_datagen = ImageDataGenerator(
-        rescale=1./255,
-        rotation_range=10,
-        width_shift_range=0.05,
-        height_shift_range=0.05,
-        horizontal_flip=True,
-        validation_split=config.VALIDATION_SPLIT
-    )
-    
-    test_datagen = ImageDataGenerator(rescale=1./255)
-
-    train_generator = train_datagen.flow_from_directory(
-        config.CLEANED_TRAINING_DIR,
-        target_size=(config.IMG_SIZE, config.IMG_SIZE),
-        batch_size=config.BATCH_SIZE,
-        class_mode='categorical',
-        subset='training'
-    )
-
-    validation_generator = train_datagen.flow_from_directory(
-        config.CLEANED_TRAINING_DIR,
-        target_size=(config.IMG_SIZE, config.IMG_SIZE),
-        batch_size=config.BATCH_SIZE,
-        class_mode='categorical',
-        subset='validation'
-    )
-
-    test_generator = test_datagen.flow_from_directory(
-        config.CLEANED_TESTING_DIR,
-        target_size=(config.IMG_SIZE, config.IMG_SIZE),
-        batch_size=config.BATCH_SIZE,
-        class_mode='categorical',
-        shuffle=False
-    )
-    
-    return train_generator, validation_generator, test_generator
-
-def train_model(model: Model, train_gen, val_gen):
-    """Executa o treinamento do modelo."""
-    callbacks = [
-        EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=1),
-        ReduceLROnPlateau(monitor='val_loss', factor=0.3, patience=3, verbose=1, mode='min'),
-        ModelCheckpoint(filepath=str(config.BEST_MODEL_PATH), monitor='val_loss', save_best_only=True, verbose=1)
+def get_callbacks():
+    """
+    Callbacks essenciais
+    """
+    return [
+        EarlyStopping(
+            monitor='val_accuracy',
+            patience=10,
+            restore_best_weights=True,
+            verbose=1
+        ),
+        ReduceLROnPlateau(
+            monitor='val_loss',
+            factor=0.5,
+            patience=5,
+            min_lr=1e-7,
+            verbose=1
+        ),
+        ModelCheckpoint(
+            filepath=str(config.BEST_MODEL_PATH),
+            monitor='val_accuracy',
+            save_best_only=True,
+            verbose=1
+        )
     ]
+
+def train_model(model, train_dataset, val_dataset):
+    """
+    Treinamento direto
+    """
+    callbacks = get_callbacks()
     
-    print("\nIniciando o treinamento do modelo...")
+    print("Iniciando treinamento")
+    print("Batch size:", config.BATCH_SIZE)
+    print("Epocas:", config.EPOCHS)
+    
+    # Treinamento
     history = model.fit(
-        train_gen,
-        validation_data=val_gen,
+        train_dataset,
+        validation_data=val_dataset,
         epochs=config.EPOCHS,
-        steps_per_epoch=train_gen.samples // config.BATCH_SIZE,
-        validation_steps=val_gen.samples // config.BATCH_SIZE,
-        callbacks=callbacks
+        callbacks=callbacks,
+        verbose=1
     )
+    
     return history

@@ -5,3 +5,5 @@ scikit-learn
 matplotlib
 seaborn
 tensorflow
+tensorflow[and-cuda]
+cuda-toolkit

@@ -2,10 +2,11 @@ import tensorflow as tf
 from tensorflow.keras.layers import Dropout, Dense, GlobalAveragePooling2D
 from tensorflow.keras.models import Model
 from tensorflow.keras.applications import ResNet50
+from tensorflow.keras.optimizers import Adam
 
-def create_model(image_size: int, num_classes: int, learning_rate: float) -> Model:
+def create_optimized_model(image_size: int, num_classes: int, learning_rate: float) -> Model:
     """
-    Cria o modelo CNN usando Transfer Learning com a ResNet50.
+    Modelo direto e eficiente
     """
     base_net = ResNet50(
         weights='imagenet',
@@ -16,12 +17,17 @@ def create_model(image_size: int, num_classes: int, learning_rate: float) -> Mod
 
     x = base_net.output
     x = GlobalAveragePooling2D()(x)
-    x = Dropout(0.4)(x)
+    x = Dropout(0.3)(x)
     outputs = Dense(num_classes, activation="softmax")(x)
     
     model = Model(inputs=base_net.input, outputs=outputs)
 
-    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-    model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
+    optimizer = Adam(learning_rate=learning_rate)
+    
+    model.compile(
+        optimizer=optimizer, 
+        loss='categorical_crossentropy', 
+        metrics=['accuracy']
+    )
     
     return model
