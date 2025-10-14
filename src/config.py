@@ -17,8 +17,8 @@ PLOTS_DIR = MODEL_DIR / 'plots'
 # --- 2. Parâmetros Otimizados para GPU ---
 IMG_SIZE = 224
 BATCH_SIZE = 64  
-EPOCHS = 5      
-LEARNING_RATE = 0.001
+EPOCHS = 50      
+LEARNING_RATE = 0.1
 VALIDATION_SPLIT = 0.2
 
 # --- 3. Garantir que os diretórios de saída existam ---
